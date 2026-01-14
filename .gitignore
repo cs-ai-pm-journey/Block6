@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+**/node_modules/
+b6-competitor-bot/node_modules/
+
+# Environment Variables
+.env
+**/.env
+
+# System
+.DS_Store
+b6-ui/dist/
