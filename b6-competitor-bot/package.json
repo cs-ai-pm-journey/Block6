@@ -1,0 +1,21 @@
+{
+  "name": "b6-competitor-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@llamaindex/openai": "^0.4.22",
+    "@tavily/core": "^0.7.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "llamaindex": "^0.12.1"
+  }
+}

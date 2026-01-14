@@ -1,0 +1,26 @@
+LEGALZOOM PARTNER API & GUARANTEE DOCUMENTATION (v2024.1)
+
+SECTION 1: PARTNER API SPECIFICATIONS
+Authentication:
+All API requests require an OAuth 2.0 access token. Partners must obtain a 'client_id' and 'client_secret' from the Partner Portal. Tokens expire after 60 minutes.
+Base URL: https://api.legalzoom.com/v2/partners/
+
+Rate Limits:
+- Sandbox Environment: 100 requests per minute.
+- Production Environment: 1,000 requests per minute per IP address.
+- 429 Error: "Too Many Requests" will be returned if limits are exceeded.
+
+Endpoints:
+- POST /formation/llc: Initiates a new LLC application. Payload must include 'business_name', 'state', and 'owner_contact'.
+- GET /order/status/{id}: Returns current filing status. Status codes: PENDING, FILED, REJECTED, COMPLETED.
+
+SECTION 2: SATISFACTION GUARANTEE (THE "LZ GUARANTEE")
+Refund Policy Overview:
+We stand behind our products with a 100% Satisfaction Guarantee.
+1. Self-Serve Filings: If you are not satisfied, you may request a refund within 60 days of purchase, provided the documents have NOT yet been filed with a government agency. Once filed, government fees are non-refundable.
+2. Subscription Services: Refundable within 30 days of initial purchase. After 30 days, subscriptions are non-refundable but can be cancelled to prevent future billing.
+3. Attorney Consultations: Fees for attorney plans are non-refundable once a consultation has occurred.
+
+Exclusions:
+- Third-party filing fees paid to the Secretary of State are non-refundable under any circumstance once paid.
+- Shipping costs for physical corporate kits are non-refundable.

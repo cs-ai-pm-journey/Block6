@@ -1,0 +1,26 @@
+LEGALZOOM CORPORATE STRATEGY OVERVIEW (FY 2024)
+
+Executive Summary:
+LegalZoom is the leading online platform for business formation in the US. The company is pivoting from a "transactional" model (one-off LLC filings) to a "subscription" model (ongoing tax and legal advice).
+
+Key Financials:
+- Annual Revenue: ~$680M.
+- Subscription Revenue Growth: +6% YoY.
+- Average Order Value (AOV): $234.
+
+Competitive Landscape (Porter's Forces Analysis):
+1. Threat of New Entrants (High):
+   - Competitors like ZenBusiness and Stripe Atlas offer streamlined, lower-cost LLC formation ($0 + state fees).
+   - LegalZoom's moat is "Brand Trust," but price sensitivity in the SMB market is a major risk.
+
+2. Buyer Power (Moderate):
+   - Customers have high churn after the first year. Most SMBs cancel subscriptions once their business is established.
+   - Strategy: LegalZoom is launching "LZ Books" and "LZ Tax" to increase stickiness and retention.
+
+3. Threat of Substitution (High):
+   - AI Legal Tools (like ChatGPT) pose a long-term threat to the "DIY Legal Forms" business.
+   - Mitigation: LegalZoom is integrating "Human-in-the-Loop" expert review to differentiate from pure AI generators.
+
+Strategic Priorities:
+1. Increase "Subscription Attach Rate" (getting LLC buyers to buy Tax advice).
+2. Partner Channel: Integrating LegalZoom flow into Wix and Squarespace.
