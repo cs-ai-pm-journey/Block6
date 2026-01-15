@@ -70,7 +70,7 @@ Prerequisites
 
 1. Clone the Repository
 ```bash
-git clone [https://github.com/cs-ai-pm-journey/Block6.git](https://github.com/cs-ai-pm-journey/Block6.git)
+git clone https://github.com/cs-ai-pm-journey/Block6.git
 cd Block6/b6-competitor-bot
 
 2. Install Dependencies
