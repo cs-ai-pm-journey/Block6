@@ -10,18 +10,21 @@ import SuggestedQuestions from './components/SuggestedQuestions';
 
 function App() {
   // 1. Initialize State from LocalStorage (or use default)
-  const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('chat_history');
-    return saved ? JSON.parse(saved) : [
-      { role: 'bot', text: 'Hello! I am your Competitor Intelligence Agent. Ask me about LegalZoom pricing, strategy, or API limits.' }
-    ];
-  });
+const [messages, setMessages] = useState(() => {
+  const saved = localStorage.getItem('chat_history');
+  return saved ? JSON.parse(saved) : [
+    { 
+      role: 'bot', 
+      text: '👋 **Market Intelligence Agent Online.**\n\nI can compare LegalZoom against live competitors, analyze pricing models, and summarize user sentiment from real-time web data.\n\nHow can I help you today?' 
+    }
+  ];
+});
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = '';
 
   // 2. Save to LocalStorage whenever messages change
   useEffect(() => {
@@ -29,11 +32,14 @@ function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleClear = () => {
-    const defaultMsg = [{ role: 'bot', text: 'Hello! I am your Competitor Intelligence Agent. Ask me about LegalZoom pricing, strategy, or API limits.' }];
-    setMessages(defaultMsg);
-    localStorage.setItem('chat_history', JSON.stringify(defaultMsg));
-  };
+const handleClear = () => {
+  const defaultMsg = [{ 
+    role: 'bot', 
+    text: '👋 **Market Intelligence Agent Online.**\n\nI can compare LegalZoom against live competitors, analyze pricing models, and summarize user sentiment from real-time web data.\n\nHow can I help you today?' 
+  }];
+  setMessages(defaultMsg);
+  localStorage.setItem('chat_history', JSON.stringify(defaultMsg));
+};
 
   const handleSend = async (text = null) => {
     const userText = text || input;
@@ -77,11 +83,15 @@ function App() {
             <SuggestedQuestions handleSend={handleSend} />
         )}
 
-        {isLoading && (
-           <div className="message bot">
-             <em>Thinking...</em>
-           </div>
-        )}
+       {isLoading && (
+  <div className="message bot">
+    <div className="typing-indicator">
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+    </div>
+  </div>
+)}
         <div ref={chatEndRef} />
       </div>
 

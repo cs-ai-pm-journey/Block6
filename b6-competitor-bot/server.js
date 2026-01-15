@@ -15,161 +15,112 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from 'url';
 
-// Setup paths for ES Modules
+// 1. Setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-// Serve the React frontend
+
+// 2. Serve Frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-let agent; 
-
-// ---------------------------------------------------------
-// 1. Define the Web Search Tool (Tavily)
-// ---------------------------------------------------------
+// 3. Define Web Search Tool
 const searchTool = FunctionTool.from(
   async ({ query }) => {
-    console.log(`🌎 Performing Web Search for: "${query}"`);
+    if (!query || query === "undefined") return "Error: Query missing.";
     try {
         const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
-        const result = await tvly.search(query, {
-          search_depth: "basic",
-          max_results: 3,
-        });
-        
-        // Format the results for the Agent to read
-        return result.results.map(r => 
-            `Source: ${r.url}\nTitle: ${r.title}\nContent: ${r.content}`
-        ).join("\n---\n");
-
+        const result = await tvly.search(query, { search_depth: "basic", max_results: 3 });
+        return result.results.map(r => `Source: ${r.url}\nContent: ${r.content}`).join("\n---\n");
     } catch (e) {
-        console.error("Search failed", e);
-        return "The web search failed. Please try again or rely on internal knowledge.";
+        return "Search failed.";
     }
   },
   {
     name: "web_search",
-    description: "Useful for finding information about competitors (like ZenBusiness, Stripe Atlas), market trends, or facts NOT found in the LegalZoom internal documents.",
+    description: "Finds competitor info on the web.",
     parameters: {
       type: "object",
-      properties: {
-        query: {
-          type: "string",
-          description: "The search query to send to the web.",
-        },
-      },
+      properties: { query: { type: "string" } },
       required: ["query"],
     },
   }
 );
 
-// ---------------------------------------------------------
-// 2. Initialize the Brain
-// ---------------------------------------------------------
+// 4. Initialize Brain
+let agent; 
+
 async function initializeBrain() {
   try {
-    console.log("🧠 Initializing Agent (Hybrid Mode)...");
-
+    console.log("🧠 Initializing AI...");
     Settings.llm = new OpenAI({ model: "gpt-4-turbo" });
     Settings.embedModel = new OpenAIEmbedding();
 
     const storageDir = path.resolve("./storage");
-    
-    if (!fs.existsSync(storageDir)) {
-        throw new Error("Storage folder missing! Run ingestion script first.");
-    }
+    let tools = [searchTool];
 
-    // Load Local Vector Store
-    const storageContext = await storageContextFromDefaults({
-      persistDir: storageDir,
-    });
-    const index = await VectorStoreIndex.init({
-      storageContext: storageContext,
-    });
+    if (fs.existsSync(storageDir)) {
+        const storageContext = await storageContextFromDefaults({ persistDir: storageDir });
+        const index = await VectorStoreIndex.init({ storageContext });
+        
+        const vectorTool = new QueryEngineTool({
+            queryEngine: index.asQueryEngine({ similarityTopK: 10 }),
+            metadata: { name: "legalzoom_internal_knowledge", description: "Internal LegalZoom docs." }
+        });
+        tools.push(vectorTool);
+    } 
 
-    // Wrap Vector Index as a Tool
-    const vectorTool = new QueryEngineTool({
-      queryEngine: index.asQueryEngine({ 
-          similarityTopK: 10 // Deep search in local files
-      }),
-      metadata: {
-        name: "legalzoom_internal_knowledge",
-        description: "ALWAYS use this tool FIRST. Contains official LegalZoom pricing, guarantee details, and API documentation.",
-      },
-    });
-
-    // Create the ReAct Agent (The Manager)
     agent = new ReActAgent({
-      tools: [vectorTool, searchTool],
-      verbose: true, 
-      systemPrompt: "You are a Competitor Intelligence Analyst. Your goal is to provide accurate answers by prioritizing internal documents. Always check 'legalzoom_internal_knowledge' first. If the info is missing, use 'web_search'. When answering, explicitly mention which sources you used."
+        tools: tools,
+        verbose: true,
+        // UPDATED: Stricter instructions to prevent "Lazy Agent" behavior
+        systemPrompt: `You are an elite Competitor Intelligence Analyst.
+        
+        CORE RESPONSIBILITIES:
+        1. INTERNAL KNOWLEDGE: Always check 'legalzoom_internal_knowledge' for LegalZoom data.
+        2. EXTERNAL RESEARCH: If the user asks about a competitor (e.g., ZenBusiness, Bizee, Stripe) that is NOT in your internal files, you **MUST** use the 'web_search' tool to find their current pricing/features.
+        3. COMPLETENESS CHECK: Do not answer until you have data for ALL companies mentioned in the prompt.
+           - Bad: "LegalZoom is $249." (Partial info)
+           - Good: "LegalZoom is $249, but ZenBusiness starts at $0, making ZenBusiness cheaper."
+        4. FORMAT: Use Markdown tables for comparisons.`
     });
-
-    console.log("✅ Agent Online. Capabilities: [Local Vectors] + [Web Search]");
+    console.log("✅ AI Online.");
 
   } catch (error) {
-    console.error("❌ FATAL: Failed to load brain.");
-    console.error(error);
-    process.exit(1);
+    console.error("❌ AI Load Failed:", error);
   }
 }
 
-// ---------------------------------------------------------
-// 3. API Route
-// ---------------------------------------------------------
+// 5. API Route
 app.post("/api/ask-competitor", async (req, res) => {
+  if (!agent) return res.status(503).json({ error: "AI loading..." });
   try {
-    const { question } = req.body;
-    if (!question) return res.status(400).json({ error: "Question required." });
-    if (!agent) return res.status(503).json({ error: "Brain loading..." });
-
-    console.log(`\n📨 Agent Task: "${question}"`);
-
-    // The Agent autonomously decides which tool to use
-    const response = await agent.chat({ message: question });
-
-    // Source Extraction Logic (Simplified for UI)
-    let sources = [];
+    const response = await agent.chat({ message: req.body.question });
     
-    // 1. Check for Vector sources (Local files)
-    if (response.sourceNodes && response.sourceNodes.length > 0) {
-        sources = response.sourceNodes.map(node => ({
-            file: node.node.metadata?.original_file || "Internal Doc",
-            text: (node.node.text || "").substring(0, 150) + "..."
-        }));
-    } 
+    let sources = response.sourceNodes?.map(node => ({
+        file: node.node.metadata?.original_file || "Internal Doc",
+        text: (node.node.text || "").substring(0, 150) + "..."
+    })) || [];
     
-    // 2. If no vector sources, it likely used the Web.
-    if (sources.length === 0) {
-        sources.push({
-            file: "Live Web Intelligence",
-            text: "This information was retrieved via real-time Tavily search."
-        });
-    }
+    if (sources.length === 0) sources.push({ file: "Web Search", text: "Live Data" });
 
-    res.json({
-      answer: response.response.toString(),
-      sources: sources
-    });
-
+    res.json({ answer: response.response.toString(), sources });
   } catch (error) {
-    console.error("Agent Error:", error);
-    res.status(500).json({ error: "Agent Failed", details: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Catch-all for React Frontend
-// We use a Regex /.*/ to match everything, bypassing the string parser bug
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// 6. Start Server (With Error Handling)
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  initializeBrain();
 });
 
-app.listen(PORT, async () => {
-  await initializeBrain();
-  console.log(`🚀 Server running on port ${PORT}`);
+server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+      console.error(`❌ FATAL: Port ${PORT} occupied. Run 'killall node' again.`);
+    }
 });

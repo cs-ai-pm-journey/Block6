@@ -10,3 +10,6 @@ b6-competitor-bot/node_modules/
 # System
 .DS_Store
 b6-ui/dist/
+
+# Logs
+npm-debug.log*
